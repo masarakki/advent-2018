@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ -e $PWD/.ruby-version ]
+then
+    RUBY_VERSION=`cat $PWD/.ruby-version | tr -d '[[:space:]]'`
+else
+    RUBY_VERSION='latest'
+fi
+
+IMAGE=ruby:$RUBY_VERSION
+RUBY_SCOPE=`docker run -it $IMAGE ruby -rbundler -e 'puts Bundler.ruby_scope' | tr -d '[[:space:]]'`
+
+VOLUMES="-v $HOME:$HOME -v /usr/include:/host/include -v /usr/lib:/host/lib"
+ENVIRONMENTS="-e HOME=$HOME -e BUNDLE_APP_CONFIG=$PWD/.bundle -e GEM_HOME=$HOME/.ruby/$RUBY_SCOPE -e BUNDLE_PATH=$HOME/.ruby/$RUBY_SCOPE -e C_INCLUDE_PATH=/host/include:/host/include/x86_64-linux-gnu -e LIBRARY_PATH=/host/lib"
+
+exec docker run -it $VOLUMES $ENVIRONMENTS -u `id -u`:`id -g` -w `pwd` $IMAGE $@
